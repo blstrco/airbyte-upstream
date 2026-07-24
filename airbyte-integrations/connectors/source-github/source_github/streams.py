@@ -1088,6 +1088,7 @@ class Reviews(SemiIncrementalMixin, GitHubGraphQLStream):
 
     is_sorted = False
     cursor_field = "updated_at"
+    large_stream = True
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
