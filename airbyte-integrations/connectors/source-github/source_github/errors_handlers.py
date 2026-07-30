@@ -12,6 +12,8 @@ from airbyte_cdk.sources.streams.http import HttpStream
 from airbyte_cdk.sources.streams.http.error_handlers import ErrorHandler, ErrorResolution, HttpStatusErrorHandler, ResponseAction
 from airbyte_cdk.sources.streams.http.error_handlers.default_error_mapping import DEFAULT_ERROR_MAPPING
 
+from . import constants
+
 
 logger = logging.getLogger("airbyte")
 
@@ -227,6 +229,14 @@ class GitHubGraphQLErrorHandler(GithubStreamABCErrorHandler):
                     ),
                 )
 
+            resolution = super().interpret_response(response_or_exception)
+            if resolution.response_action == ResponseAction.RATE_LIMITED:
+                return resolution
+
+            self.stream.page_size = (
+                constants.DEFAULT_PAGE_SIZE_FOR_LARGE_STREAM if self.stream.large_stream else constants.DEFAULT_PAGE_SIZE
+            )
+
             if self._safe_json_get_errors(response_or_exception):
                 return ErrorResolution(
                     response_action=ResponseAction.RETRY,
@@ -236,5 +246,7 @@ class GitHubGraphQLErrorHandler(GithubStreamABCErrorHandler):
                         f"for stream `{self.stream.name}` (HTTP {response_or_exception.status_code}). Retrying."
                     ),
                 )
+
+            return resolution
 
         return super().interpret_response(response_or_exception)
