@@ -39,7 +39,6 @@ The Intercom API supports cursor-based pagination and `updated_at`-style filteri
 | tickets | medium | top-level parent | updated_at | updated_at | incremental |  |
 | company_segments | medium | child | updated_at | updated_at | incremental |  |
 | conversation_parts | medium | child | updated_at | updated_at | incremental |  |
-| conversation_tags | medium | child | updated_at | updated_at | incremental |  |
 
 ### Future incremental stream candidates
 
