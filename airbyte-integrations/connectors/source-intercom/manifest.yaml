@@ -648,6 +648,51 @@ definitions:
       state_migrations:
         - type: CustomStateMigration
           class_name: source_declarative_manifest.components.SubstreamStateMigration
+    conversation_tags:
+      type: DeclarativeStream
+      description: >-
+        https://developers.intercom.com/docs/references/2.11/rest-api/api.intercom.io/conversations/retrieveconversation
+      name: conversation_tags
+      primary_key:
+        - id
+      retriever:
+        type: SimpleRetriever
+        requester:
+          $ref: "#/definitions/streams/conversation_parts/retriever/requester"
+        record_selector:
+          type: RecordSelector
+          extractor:
+            type: DpathExtractor
+            field_path: []
+        partition_router:
+          $ref: "#/definitions/streams/conversation_parts/retriever/partition_router"
+      incremental_sync:
+        $ref: "#/definitions/streams/conversation_parts/incremental_sync"
+      transformations:
+        # Keep only id, updated_at and tags: collect them under _selected, then replace the record with it.
+        - type: AddFields
+          fields:
+            - path:
+                - _selected
+                - id
+              value: "{{ record['id'] }}"
+              value_type: string
+            - path:
+                - _selected
+                - updated_at
+              value: "{{ record['updated_at'] }}"
+            - path:
+                - _selected
+                - tags
+              value: "{{ record['tags'] }}"
+        - type: DpathFlattenFields
+          field_path:
+            - _selected
+          replace_record: true
+      schema_loader:
+        type: InlineSchemaLoader
+        schema:
+          $ref: "#/schemas/conversation_tags"
     company_segments:
       description: >-
         https://developers.intercom.com/docs/references/2.11/rest-api/api.intercom.io/companies/listattachedsegmentsforcompanies
@@ -806,6 +851,7 @@ streams:
   - $ref: "#/definitions/streams/contacts"
   - $ref: "#/definitions/streams/conversations"
   - $ref: "#/definitions/streams/conversation_parts"
+  - $ref: "#/definitions/streams/conversation_tags"
   - $ref: "#/definitions/streams/company_segments"
   - $ref: "#/definitions/streams/tickets"
 
@@ -937,6 +983,7 @@ metadata:
     contacts: false
     conversations: false
     conversation_parts: false
+    conversation_tags: false
     company_segments: false
     tickets: false
   yamlComponents:
@@ -966,6 +1013,10 @@ metadata:
         - errorHandler
         - incrementalSync
       conversation_parts:
+        - errorHandler
+        - incrementalSync
+        - parentStreams
+      conversation_tags:
         - errorHandler
         - incrementalSync
         - parentStreams
@@ -3228,6 +3279,78 @@ schemas:
           - "null"
           - integer
         description: The date and time when the conversation part was last updated.
+  conversation_tags:
+    type: object
+    additionalProperties: true
+    properties:
+      id:
+        type:
+          - "null"
+          - string
+        description: The unique ID of the conversation.
+      updated_at:
+        type:
+          - "null"
+          - integer
+        description: The date and time when the conversation was last updated.
+      tags:
+        type:
+          - "null"
+          - object
+        description: The tag list of the conversation.
+        properties:
+          type:
+            type:
+              - "null"
+              - string
+            description: The type of the object, always tag.list.
+          tags:
+            type:
+              - "null"
+              - array
+            description: The tags applied to the conversation.
+            items:
+              type:
+                - "null"
+                - object
+              additionalProperties: true
+              properties:
+                type:
+                  type:
+                    - "null"
+                    - string
+                  description: The type of the tag
+                id:
+                  type:
+                    - "null"
+                    - string
+                  description: The ID of the tag
+                name:
+                  type:
+                    - "null"
+                    - string
+                  description: The name of the tag
+                applied_at:
+                  type:
+                    - "null"
+                    - integer
+                  description: Timestamp when the tag was applied
+                applied_by:
+                  type:
+                    - "null"
+                    - object
+                  description: User who applied the tag.
+                  properties:
+                    type:
+                      type:
+                        - "null"
+                        - string
+                      description: The type of the user who applied the tag
+                    id:
+                      type:
+                        - "null"
+                        - string
+                      description: The ID of the user who applied the tag
   company_segments:
     type: object
     additionalProperties: true

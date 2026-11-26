@@ -90,6 +90,7 @@ The Intercom source connector supports the following streams:
 - [Contacts](https://developers.intercom.com/docs/references/2.11/rest-api/api.intercom.io/contacts/searchcontacts) \(Incremental\)
 - [Conversations](https://developers.intercom.com/docs/references/2.11/rest-api/api.intercom.io/conversations/searchconversations) \(Incremental\)
   - [Conversation Parts](https://developers.intercom.com/docs/references/2.11/rest-api/api.intercom.io/conversations/retrieveconversation) \(Incremental\)
+  - [Conversation Tags](https://developers.intercom.com/docs/references/2.11/rest-api/api.intercom.io/conversations/retrieveconversation) \(Incremental\)
 - [Segments](https://developers.intercom.com/docs/references/2.11/rest-api/api.intercom.io/segments/listsegments) \(Incremental\)
 - [Tags](https://developers.intercom.com/docs/references/2.11/rest-api/api.intercom.io/tags/listtags) \(Full table\)
 - [Teams](https://developers.intercom.com/docs/references/2.11/rest-api/api.intercom.io/teams/listteams) \(Full table\)
@@ -134,6 +135,7 @@ If you use Airbyte Cloud and your organization restricts access to specific IPs,
 
 | Version      | Date       | Pull Request                                             | Subject                                                                                                                              |
 |:-------------|:-----------|:---------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------|
+| 0.13.31 | 2026-11-26 | [37](https://github.com/blstrco/airbyte-upstream/pull/37) | Add the `conversation_tags` stream, which reads each conversation's tags from the conversation itself instead of the search index |
 | 0.13.30 | 2026-11-10 | [91585](https://github.com/airbytehq/airbyte/pull/91585) | Update dependencies |
 | 0.13.29 | 2026-11-03 | [90886](https://github.com/airbytehq/airbyte/pull/90886) | Simplify error handling configuration for the conversation_parts stream; no behavior change |
 | 0.13.28 | 2026-11-03 | [90605](https://github.com/airbytehq/airbyte/pull/90605) | Update dependencies |
