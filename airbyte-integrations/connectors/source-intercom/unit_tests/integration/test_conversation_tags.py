@@ -35,7 +35,7 @@ _LIVE_TAGS = {
         {
             "type": "tag",
             "id": "0123",
-            "name": "It's \"VIP\"",
+            "name": 'It\'s "VIP"',
             "applied_at": _UPDATED_AT,
             "applied_by": {"type": "admin", "id": "456"},
         }
