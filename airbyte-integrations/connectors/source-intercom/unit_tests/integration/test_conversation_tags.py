@@ -110,7 +110,7 @@ class ConversationTagsTest(TestCase):
         assert output.errors == []
         assert [record.record.data for record in output.records] == [{"id": "124", "updated_at": _UPDATED_AT, "tags": _LIVE_TAGS}]
 
-    def test_emits_no_tags_and_no_other_field_when_tags_are_missing(self) -> None:
+    def test_emits_null_or_no_tags_and_no_other_field_when_tags_are_missing(self) -> None:
         conversation_without_tags = _conversation("123", _EMPTY_TAGS)
         del conversation_without_tags["tags"]
 
@@ -120,7 +120,9 @@ class ConversationTagsTest(TestCase):
 
             output = read()
 
-        assert [record.record.data for record in output.records] == [{"id": "123", "updated_at": _UPDATED_AT}]
+        assert [{"tags": None, **record.record.data} for record in output.records] == [
+            {"id": "123", "updated_at": _UPDATED_AT, "tags": None}
+        ]
 
     def test_emits_conversation_updated_before_the_stream_cursor(self) -> None:
         state = {
