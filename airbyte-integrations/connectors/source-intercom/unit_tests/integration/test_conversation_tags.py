@@ -53,10 +53,10 @@ def _source(catalog: ConfiguredAirbyteCatalog, config: Mapping[str, Any], state:
     return YamlDeclarativeSource(path_to_yaml=str(_YAML_FILE_PATH), catalog=catalog, config=config, state=state)
 
 
-def read() -> EntrypointOutput:
+def read(state_builder: Optional[StateBuilder] = None) -> EntrypointOutput:
     catalog = _catalog()
     config = ConfigBuilder().start_date(_NOW - timedelta(hours=1)).build()
-    state = StateBuilder().build()
+    state = state_builder.build() if state_builder else StateBuilder().build()
     return entrypoint_read(_source(catalog, config, state), config, catalog, state)
 
 
@@ -110,7 +110,7 @@ class ConversationTagsTest(TestCase):
         assert output.errors == []
         assert [record.record.data for record in output.records] == [{"id": "124", "updated_at": _UPDATED_AT, "tags": _LIVE_TAGS}]
 
-    def test_emits_no_other_field_when_tags_are_missing(self) -> None:
+    def test_emits_no_tags_and_no_other_field_when_tags_are_missing(self) -> None:
         conversation_without_tags = _conversation("123", _EMPTY_TAGS)
         del conversation_without_tags["tags"]
 
@@ -120,4 +120,20 @@ class ConversationTagsTest(TestCase):
 
             output = read()
 
-        assert [set(record.record.data) for record in output.records] == [{"id", "updated_at", "tags"}]
+        assert [record.record.data for record in output.records] == [{"id": "123", "updated_at": _UPDATED_AT}]
+
+    def test_emits_conversation_updated_before_the_stream_cursor(self) -> None:
+        state = {
+            "use_global_cursor": True,
+            "state": {"updated_at": str(_UPDATED_AT + 300)},
+            "lookback_window": 1,
+            "parent_state": {"conversations": {"updated_at": str(_UPDATED_AT - 60)}},
+        }
+
+        with requests_mock.Mocker() as http_mocker:
+            http_mocker.post("https://api.intercom.io/conversations/search", json=_search_response(["123"]))
+            http_mocker.get("https://api.intercom.io/conversations/123", json=_conversation("123", _LIVE_TAGS))
+
+            output = read(StateBuilder().with_stream_state(_STREAM_NAME, state))
+
+        assert [record.record.data for record in output.records] == [{"id": "123", "updated_at": _UPDATED_AT, "tags": _LIVE_TAGS}]

@@ -666,8 +666,20 @@ definitions:
             field_path: []
         partition_router:
           $ref: "#/definitions/streams/conversation_parts/retriever/partition_router"
+      # No is_client_side_incremental, unlike conversation_parts: the parent already yields only changed conversations,
+      # and this stream's cursor follows the conversation's own updated_at, which can be ahead of the search index.
       incremental_sync:
-        $ref: "#/definitions/streams/conversation_parts/incremental_sync"
+        type: DatetimeBasedCursor
+        cursor_field: updated_at
+        start_datetime:
+          type: MinMaxDatetime
+          datetime: "{{ format_datetime(config['start_date'], '%s') }}"
+          datetime_format: "%s"
+        datetime_format: "%s"
+        lookback_window: P{{ config.get('lookback_window', 0) }}D
+        cursor_datetime_formats:
+          - "%s"
+        global_substream_cursor: true
       transformations:
         # Keep only id, updated_at and tags: collect them under _selected, then replace the record with it.
         - type: AddFields
@@ -680,11 +692,11 @@ definitions:
             - path:
                 - _selected
                 - updated_at
-              value: "{{ record['updated_at'] }}"
+              value: "{{ record.get('updated_at') }}"
             - path:
                 - _selected
                 - tags
-              value: "{{ record['tags'] }}"
+              value: "{{ record.get('tags') }}"
         - type: DpathFlattenFields
           field_path:
             - _selected
